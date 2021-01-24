@@ -11,7 +11,7 @@ Climate predictions show maps of constant shape with varying colour, encoding in
 
 # Getting started
 
-Unzip `docs/source/data` in main directory.
+[Download](https://www.dropbox.com/s/gbixv7hg2140e4d/data.zip?dl=0) data and unzip in main directory.
 
 To spatially visualize the continent drift corresponding to temperature changes between 1950's and present day, run
 
@@ -20,7 +20,7 @@ $ python run_image_distortion.py --cfg=50s-to-present.yaml --input=data/sat_imag
 ```
 
 <p align="center">
-  <img width="65%" src="data/sat_image.jpg"/>
+  <img width="65%" src="docs/source/img/sat_image.jpg"/>
 </p>
 <p align="center">
   <img width="65%" src="docs/source/img/remapped_sat.png"/>
