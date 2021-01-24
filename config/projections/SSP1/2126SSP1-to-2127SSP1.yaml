@@ -1,0 +1,10 @@
+exploration_range: 2
+grid_step:
+- 10
+- 10
+img_size:
+- 18
+- 8
+kind: linear
+src: data/ssp1_proj/2126.nc
+tgt: data/ssp1_proj/2127.nc
