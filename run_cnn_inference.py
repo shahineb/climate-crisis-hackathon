@@ -16,13 +16,17 @@ import numpy as np
 import xarray as xr
 import torch
 from progress.bar import Bar
-from run_cnn_training import ConvNet, FieldsDataset
+from src import ConvNet, FieldsDataset
 
 
 def main(args):
+    # Setup model
+    logging.info(f"Loading model weights from {args['--weights']}")
     dataset = FieldsDataset(root=args['--root'])
     model = load_model(weights_path=args['--weights'])
+    model.eval()
 
+    # Run inference recursively to project future temperature fields
     predict_next_frames(model=model,
                         dataset=dataset,
                         n_steps=int(args['--n']),
@@ -30,15 +34,33 @@ def main(args):
 
 
 def load_model(weights_path):
+    """Creates ConvNet model as in run_cnn_training.py and loads training
+        weights
+
+    Args:
+        weights_path (str): path to model weights
+
+    Returns:
+        type: ConvNet
+
+    """
     model = ConvNet(in_channels=3, out_channels=1, hidden_channels=8)
     model.load_state_dict(torch.load(weights_path))
     return model
 
-def update_input(src_tensor, predicted_tensor):
-    src_tensor = torch.cat([src_tensor[1:], predicted_tensor.unsqueeze(0)])
-    return src_tensor
 
 def predict_next_frames(model, dataset, n_steps, dump_dir):
+    """Recursively runs inference over last 3 known frames, saves prediction and
+    uses it to replace oldest frame from last 3 known frames
+
+    Args:
+        model (nn.Module)
+        dataset (FieldsDataset)
+        n_steps (int): number of recursive time steps to take
+        dump_dir (str): path to output dumping directory
+
+    """
+    # Load last images from dataset as starting point
     bar = Bar("Step ", max=n_steps)
     src_tensor, tgt_tensor = dataset[len(dataset)]
     src_tensor = update_input(src_tensor, tgt_tensor.squeeze())
@@ -58,6 +80,22 @@ def predict_next_frames(model, dataset, n_steps, dump_dir):
         src_tensor = update_input(src_tensor, pred)
         src_tensor = torch.cat([src_tensor[1:], pred.unsqueeze(0)])
         bar.next()
+
+
+def update_input(src_tensor, predicted_tensor):
+    """Drops oldest frame from source tensor and stacks in the predicted one in
+    a first-in-first-out fashion
+
+    Args:
+        src_tensor (torch.Tensor): (3, H, W)
+        predicted_tensor (torch.Tensor): (H, W)
+
+    Returns:
+        type: torch.Tensor
+
+    """
+    src_tensor = torch.cat([src_tensor[1:], predicted_tensor.unsqueeze(0)])
+    return src_tensor
 
 
 if __name__ == "__main__":
